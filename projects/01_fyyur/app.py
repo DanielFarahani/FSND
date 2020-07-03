@@ -16,6 +16,7 @@ from flask_migrate import Migrate
 from forms import VenueForm, ArtistForm, ShowForm
 from datetime import datetime
 import sys
+from sqlalchemy import func
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -46,11 +47,13 @@ class Venue(db.Model):
   seeking_talent = db.Column(db.Boolean)
   seeking_description = db.Column(db.String(500))
   website = db.Column(db.String(120))
-  # genres=request.form.getlist('genres')
+  show = db.relationship('Show', backref='venue', lazy=True)
 
   def upcoming_shows():
-    shows = db.session.query(Venue.id, Venue.name).join(Show).filter_by(Show.start_time > datetime.now).count()
+    shows = db.session.query(Venue.id, Venue.name).join(Show).filter(Show.start_time > datetime.now).count()
   
+  def past_shows():
+    shows = db.session.query(Venue.id, Venue.name).join(Show).filter(Show.start_time < datetime.now).count()
 
 
   def __repr__(self):
@@ -69,6 +72,7 @@ class Artist(db.Model):
   website = db.Column(db.String(120))
   image_link = db.Column(db.String(500))
   facebook_link = db.Column(db.String(120))
+  show = db.relationship('Show', backref='artist', lazy=True)
   
   def __repr__(self):
     return f'<AID: {self.id}, name: {self.name}, state: {self.city}>'
@@ -129,28 +133,30 @@ def venues():
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
-  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-  # seach for Hop should return "The Musical Hop".
-  # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
-  response={
-    "count": 1,
-    "data": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }
-  
-  return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
+  search_term = request.form.get('search_term', '')
+  response = {}
+  data = []
+  venues = Venue.query.filter(func.lower(Venue.name).contains(search_term.lower())).all()
+  for venue in venues:
+    data.append({'id': venue.id, 'name': venue.name, 'num_upcoming_shows': venue.upcoming_shows})
+  response['data'] = data
+  response['count'] = len(venues)
+
+  return render_template('pages/search_venues.html', results=response, search_term=search_term)
 
 
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
   # shows the venue page with the given venue_id
-  # TODO: replace with real venue data from the venues table, using venue_id
-  data = {}
+  # TODO: bug with the queries
+  data = Venue.query.filter_by(id=venue_id).first().__dict__
+  past_shows = db.session.query(Venue, Show, Artist).join(Show, Venue.id == Show.venue_id).filter(Show.start_time < datetime.now()).all()
+  upcoming_shows = db.session.query(Venue, Show, Artist).join(Show, Venue.id == Show.venue_id).filter(Show.start_time > datetime.now()).all()
+  data['past_shows'] = [{'artist_id': a.id, 'artist_name': a.name, 'artist_image_link': a.image_link, 'start_time': str(s.start_time)} for (v, s, a) in past_shows]
+  data['upcoming_shows'] = [{'artist_id': a.id, 'artist_name': a.name, 'artist_image_link': a.image_link, 'start_time': str(s.start_time)} for (v, s, a) in upcoming_shows]
+  data['past_show_count'] = len(data['past_shows'])
+  data['upcoming_show_count'] = len(data['upcoming_shows'])
   # data format =>  {id, name, genre, address, city, state, phone, web, db, seek tal, image, past[{artist id, artist name, artist img, startime}, ], past_shows_couutn, upcoming_shows_count}
-  # data = list(filter(lambda d: d['id'] == venue_id, [data1, data2, data3]))[0]
   return render_template('pages/show_venue.html', venue=data)
 
 #  Create Venue
@@ -165,12 +171,14 @@ def create_venue_form():
 def create_venue_submission():
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
-
-  # on successful db insert, flash success
-  flash('Venue ' + request.form['name'] + ' was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
-  # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
-  # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+  try:
+    pass
+    # on successful db insert, flash success
+    flash('Venue ' + request.form['name'] + ' was successfully listed!')
+  except Exception as e:
+    # on unsuccessful db insert, flash an error 
+    flash('Venue ' + request.form['name'] + ' was not listed, please try again!')
+  
   return render_template('pages/home.html')
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
@@ -191,20 +199,16 @@ def artists():
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
-  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-  # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
-  # search for "band" should return "The Wild Sax Band".
 
-  # Artist.query.filter(Artist.name.contains('search_term')).all()
-  response={
-    "count": 1,
-    "data": [{
-      "id": 4,
-      "name": "Guns N Petals",
-      "num_upcoming_shows": 0,
-    }]
-  }
-  # data format => {count, [{id, name, upcoming_shows}, ]}
+  search_term = request.form.get('search_term', '')
+  response = {}
+  data = []
+  artists = Artist.query.filter(func.lower(Artist.name).contains(search_term.lower())).all()
+  for artist in artists:
+    data.append({'id': artist.id, 'name': artist.name, 'num_upcoming_shows': artist.upcoming_shows})
+  response['data'] = data
+  response['count'] = len(artists)
+
   return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
 
 @app.route('/artists/<int:artist_id>')
@@ -219,6 +223,7 @@ def show_artist(artist_id):
 #  ----------------------------------------------------------------
 @app.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
+  # genres=request.form.getlist('genres')
   form = ArtistForm()
   artist= Artist.query.all()
   # data format => {id, name, gnre, city, state, phone, web, fb, seeking, seek dsc, image}
