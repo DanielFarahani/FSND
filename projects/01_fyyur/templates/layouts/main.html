@@ -51,6 +51,7 @@
           <a class="navbar-brand" href="/">🔥</a>
         </div>
         <div class="collapse navbar-collapse">
+          <!-- puts the right search bar in the navbar -->
           <ul class="nav navbar-nav">
             <li>
               {% if (request.endpoint == 'venues') or
@@ -64,6 +65,7 @@
                   aria-label="Search">
               </form>
               {% endif %}
+
               {% if (request.endpoint == 'artists') or
                 (request.endpoint == 'search_artists') or
                 (request.endpoint == 'show_artist') %}
@@ -75,8 +77,10 @@
                   aria-label="Search">
               </form>
               {% endif %}
+
             </li>
           </ul>
+          <!-- the rest of the navbar that is consistent -->
           <ul class="nav navbar-nav">
             <li {% if request.endpoint == 'venues' %} class="active" {% endif %}><a href="{{ url_for('venues') }}">Venues</a></li>
             <li {% if request.endpoint == 'artists' %} class="active" {% endif %}><a href="{{ url_for('artists') }}">Artists</a></li>
