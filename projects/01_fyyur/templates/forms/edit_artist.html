@@ -18,7 +18,7 @@
             </div>
             <div class="form-group">
               <!-- TODO fix the value fill in -->
-              {{ form.state(class_ = 'form-control', value=artist.state, autofocus = true) }}
+              {{ form.state(class_ = 'form-control', data=artist.state, autofocus = true) }}
             </div>
           </div>
       </div>
@@ -32,7 +32,7 @@
         <label for="genres">Genres</label>
         <small>Ctrl+Click to select multiple</small>
         <!-- TODO fix the value fill in -->
-        {{ form.genres(class_ = 'form-control', value=artist.genres, autofocus = true) }}
+        {{ form.genres(class_ = 'form-control', data=artist.genres, autofocus = true) }}
       </div>
       <!-- facebook link box -->
       <div class="form-group">

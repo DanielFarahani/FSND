@@ -330,6 +330,7 @@ def create_shows():
 @app.route('/shows/create', methods=['POST'])
 def create_show_submission():
   # creates new show
+  # TODO: creates same PK for some reason
   try:
     show = request.form.to_dict()
     new_show = Show(venue_id=show['venue_id'], artist_id=show['artist_id'], start_time=show['start_time'])
