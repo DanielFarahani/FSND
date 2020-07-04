@@ -13,7 +13,7 @@ class ShowForm(Form):
     start_time = DateTimeField(
         'start_time',
         validators=[DataRequired()],
-        default= datetime.today()
+        default=datetime.today()
     )
 
 class VenueForm(Form):
@@ -89,7 +89,6 @@ class VenueForm(Form):
         'image_link'
     )
     genres = SelectMultipleField(
-        # TODO implement enum restriction
         'genres', validators=[DataRequired()],
         choices=[
             ('Alternative', 'Alternative'),
@@ -181,14 +180,12 @@ class ArtistForm(Form):
         ]
     )
     phone = StringField(
-        # TODO implement validation logic for state
-        'phone'
+        'phone', validators=[DataRequired()]
     )
     image_link = StringField(
         'image_link'
     )
     genres = SelectMultipleField(
-        # TODO implement enum restriction
         'genres', validators=[DataRequired()],
         choices=[
             ('Alternative', 'Alternative'),

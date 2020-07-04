@@ -35,7 +35,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = config.SQLALCHEMY_DATABASE_URI
 
 class Venue(db.Model):
   __tablename__ = 'Venue'
-  id = db.Column(db.Integer, primary_key=True, nullable=False)
+  id = db.Column(db.Integer, primary_key=True)
   name = db.Column(db.String)
   city = db.Column(db.String(120))
   state = db.Column(db.String(120))
@@ -51,10 +51,9 @@ class Venue(db.Model):
 
   def upcoming_shows():
     shows = db.session.query(Venue.id, Venue.name).join(Show).filter(Show.start_time > datetime.now).count()
-  
+
   def past_shows():
     shows = db.session.query(Venue.id, Venue.name).join(Show).filter(Show.start_time < datetime.now).count()
-
 
   def __repr__(self):
     return f'<VID: {self.id}, name: {self.name}, state: {self.state}>'
@@ -73,7 +72,7 @@ class Artist(db.Model):
   image_link = db.Column(db.String(500))
   facebook_link = db.Column(db.String(120))
   show = db.relationship('Show', backref='artist', lazy=True)
-  
+
   def __repr__(self):
     return f'<AID: {self.id}, name: {self.name}, state: {self.city}>'
 
@@ -148,15 +147,14 @@ def search_venues():
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
   # shows the venue page with the given venue_id
-  # TODO: bug with the queries
   data = Venue.query.filter_by(id=venue_id).first().__dict__
-  past_shows = db.session.query(Venue, Show, Artist).join(Show, Venue.id == Show.venue_id).filter(Show.start_time < datetime.now()).all()
-  upcoming_shows = db.session.query(Venue, Show, Artist).join(Show, Venue.id == Show.venue_id).filter(Show.start_time > datetime.now()).all()
+  past_shows = db.session.query(Venue, Show, Artist).filter(Venue.id == Show.venue_id).filter(Artist.id == Show.artist_id).filter(Show.start_time < datetime.now()).filter(Venue.id == venue_id).all()
+  upcoming_shows = db.session.query(Venue, Show, Artist).filter(Venue.id == Show.venue_id).filter(Artist.id == Show.artist_id).filter(Show.start_time > datetime.now()).filter(Venue.id == venue_id).all()
   data['past_shows'] = [{'artist_id': a.id, 'artist_name': a.name, 'artist_image_link': a.image_link, 'start_time': str(s.start_time)} for (v, s, a) in past_shows]
   data['upcoming_shows'] = [{'artist_id': a.id, 'artist_name': a.name, 'artist_image_link': a.image_link, 'start_time': str(s.start_time)} for (v, s, a) in upcoming_shows]
   data['past_show_count'] = len(data['past_shows'])
   data['upcoming_show_count'] = len(data['upcoming_shows'])
-  # data format =>  {id, name, genre, address, city, state, phone, web, db, seek tal, image, past[{artist id, artist name, artist img, startime}, ], past_shows_couutn, upcoming_shows_count}
+
   return render_template('pages/show_venue.html', venue=data)
 
 #  Create Venue
@@ -167,19 +165,32 @@ def create_venue_form():
   form = VenueForm()
   return render_template('forms/new_venue.html', form=form)
 
+
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
+  venue = request.form.to_dict()  # name, city, state, address, pone, genres, fb link
+
   try:
-    pass
+    new_venue = Venue(name=venue['name'], city=venue['city'], state=venue['state'],
+                      address=venue['address'], phone=venue['phone'], genres=venue['genres'], 
+                      facebook_link=venue['facebook_link'])
+    app.logger.info(new_venue)
+    # db.session.add(new_venue)
+    # db.session.commit()
     # on successful db insert, flash success
     flash('Venue ' + request.form['name'] + ' was successfully listed!')
   except Exception as e:
+    db.session.rollback()
+    
     # on unsuccessful db insert, flash an error 
     flash('Venue ' + request.form['name'] + ' was not listed, please try again!')
-  
+  finally:
+    db.session.close()
+
   return render_template('pages/home.html')
+
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
@@ -199,7 +210,6 @@ def artists():
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
-
   search_term = request.form.get('search_term', '')
   response = {}
   data = []
@@ -214,9 +224,14 @@ def search_artists():
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
   # shows the venue page with the given venue_id
-  # TODO: replace with real venue data from the venues table, using venue_id
-  data = Artist.query.filter_by(id=artist_id).all()
-  # data format => {id, name, genre, city, state, phone, seeking ven, image, pastshows[], upcoming[{ven id, ven name, ven image, start_time}, ], past_show_count, upcoming_count}
+  data = Artist.query.filter_by(id=artist_id).first().__dict__
+  past_shows = db.session.query(Venue, Show, Artist).filter(Venue.id == Show.venue_id).filter(Artist.id == Show.artist_id).filter(Show.start_time < datetime.now()).filter(Artist.id == artist_id).all()
+  upcoming_shows = db.session.query(Venue, Show, Artist).filter(Venue.id == Show.venue_id).filter(Artist.id == Show.artist_id).filter(Show.start_time > datetime.now()).filter(Artist.id == artist_id).all()
+  data['past_shows'] = [{'venue_id': v.id, 'venue_name': v.name, 'venue_image_link': v.image_link, 'start_time': str(s.start_time)} for (v, s, a) in past_shows]
+  data['upcoming_shows'] = [{'venue_id': v.id, 'venue_name': v.name, 'venue_image_link': v.image_link, 'start_time': str(s.start_time)} for (v, s, a) in upcoming_shows]
+  data['past_show_count'] = len(data['past_shows'])
+  data['upcoming_show_count'] = len(data['upcoming_shows'])
+
   return render_template('pages/show_artist.html', artist=data)
 
 #  Update
@@ -278,11 +293,8 @@ def create_artist_submission():
 @app.route('/shows')
 def shows():
   # displays list of shows at /shows
-  # TODO: replace with real venues data.
-  #       num_shows should be aggregated based on number of upcoming shows per venue.
-
-  data =[{}]
-  # data format => [{venue_id, venue_name, artist_id, artist_name, artist_image_link, start_time}]
+  shows = db.session.query(Venue, Show, Artist).filter(Venue.id == Show.venue_id).filter(Artist.id == Show.artist_id).all()
+  data = [{'venue_id': v.id, 'venue_name': v.name, 'artist_id': a.id, 'artist_name': a.name, 'artist_image_link': a.image_link, 'start_time': str(s.start_time)} for (v, s, a) in shows]
   return render_template('pages/shows.html', shows=data)
 
 @app.route('/shows/create')
