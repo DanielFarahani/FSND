@@ -193,14 +193,14 @@ def delete_venue(venue_id):
     db.session.delete(ven)
     db.session.commit()
     flash('Venue was successfully deleted!')  # on success
+    return render_template('pages/home.html')
   except Exception as e:
     db.session.rollback()
     flash('Venue was not deleted, please try again!')  # on fail
   finally:
     db.session.close()
 
-
-  return render_template('pages/home.html')
+  return None
 
 #  Artists
 #  ----------------------------------------------------------------
@@ -239,32 +239,47 @@ def show_artist(artist_id):
 #  ----------------------------------------------------------------
 @app.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
-  # genres=request.form.getlist('genres')
+  # get the info from the artist page
   form = ArtistForm()
-  artist= Artist.query.all()
-  # data format => {id, name, gnre, city, state, phone, web, fb, seeking, seek dsc, image}
-  # TODO: populate form with fields from artist with ID <artist_id>
+  artist= Artist.query.filter_by(id=artist_id).all()[0]
   return render_template('forms/edit_artist.html', form=form, artist=artist)
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_submission(artist_id):
-  # TODO: take values from the form submitted, and update existing
-  # artist record with ID <artist_id> using the new attributes
+  artist = request.form.to_dict()
+  try:
+    Artist.query.filter_by(id=artist_id).update(artist)
+    Artist.query.filter_by(id=artist_id).update(dict(genres=request.form.getlist('genres')))
+    db.session.commit()
+    flash('Artist ' + artist['name'] + ' was successfully listed!')  # on success
+  except Exception as e:
+    db.session.rollback()
+    flash('Artist ' + artist['name'] + ' was not listed, please try again!')  # on fail
+  finally:
+    db.session.close()
 
   return redirect(url_for('show_artist', artist_id=artist_id))
 
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
   form = VenueForm()
-  venue= Venue.query.all()
-  # data format => {id, name, genres, address,city,state,phone, web,fb, seeking, seeking desc, image_link}
-  # TODO: populate form with values from venue with ID <venue_id>
+  venue = Venue.query.filter_by(id=venue_id).all()[0]
   return render_template('forms/edit_venue.html', form=form, venue=venue)
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
-  # TODO: take values from the form submitted, and update existing
-  # venue record with ID <venue_id> using the new attributes
+  venue = request.form.to_dict()
+  try:
+    Venue.query.filter_by(id=venue_id).update(venue)
+    Venue.query.filter_by(id=venue_id).update(dict(genres=request.form.getlist('genres')))
+    db.session.commit()
+    flash('Artist ' + venue['name'] + ' was successfully listed!')  # on success
+  except Exception as e:
+    db.session.rollback()
+    flash('Artist ' + venue['name'] + ' was not listed, please try again!')  # on fail
+  finally:
+    db.session.close()
+
   return redirect(url_for('show_venue', venue_id=venue_id))
 
 #  Create Artist
@@ -323,6 +338,7 @@ def create_show_submission():
     flash('Show was successfully listed!')
   except Exception as e:
     db.session.rollback()
+    app.logger.info(e)
     flash('Show was NOT successfully listed. Try again.')
   finally:
     db.session.close()

@@ -5,6 +5,12 @@
 	<div class="col-sm-6">
 		<h1 class="monospace">
 			{{ artist.name }}
+			<form action="/artists/{{artist.id}}/edit" class="form" method="get">
+				<input type="submit" value="Edit Artist" 
+					class="btn btn-primary btn-lg btn-block" 
+					formaction="{{ url_for('edit_artist', artist_id=artist.id) }}"
+				>
+			</form>
 		</h1>
 		<p class="subtitle">
 			ID: {{ artist.id }}
