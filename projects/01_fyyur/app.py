@@ -178,7 +178,6 @@ def create_venue_submission():
     flash('Venue ' + request.form['name'] + ' was successfully listed!')  # on success
   except Exception as e:
     db.session.rollback()
-    app.logger.info(e)
     flash('Venue ' + request.form['name'] + ' was not listed, please try again!')  # on fail
   finally:
     db.session.close()
@@ -188,10 +187,10 @@ def create_venue_submission():
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
-  # TODO: Complete this endpoint for taking a venue_id, and using
-  # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
+  # TODO: bug the botton doesn't call the function
   try:
-    Venue.query.filter_by(id=venue_id).delete()
+    ven = Venue.query.filter_by(id=venue_id)
+    db.session.delete(ven)
     db.session.commit()
     flash('Venue was successfully deleted!')  # on success
   except Exception as e:
@@ -200,8 +199,7 @@ def delete_venue(venue_id):
   finally:
     db.session.close()
 
-  # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
-  # clicking that button delete it from the db then redirect the user to the homepage
+
   return render_template('pages/home.html')
 
 #  Artists
@@ -308,14 +306,19 @@ def create_shows():
 
 @app.route('/shows/create', methods=['POST'])
 def create_show_submission():
-  # called to create new shows in the db, upon submitting new show listing form
-  # TODO: insert form data as a new Show record in the db, instead
+  # creates new show
+  try:
+    show = request.form.to_dict()
+    new_show = Show(venue_id=show['venue_id'], artist_id=show['artist_id'], start_time=show['start_time'])
+    db.session.add(new_show)
+    db.session.commit()
+    flash('Show was successfully listed!')
+  except Exception as e:
+    db.session.rollback()
+    flash('Show was NOT successfully listed. Try again.')
+  finally:
+    db.session.close()
 
-  # on successful db insert, flash success
-  flash('Show was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
-  # e.g., flash('An error occurred. Show could not be listed.')
-  # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
   return render_template('pages/home.html')
 
 @app.errorhandler(404)
