@@ -48,10 +48,7 @@ def create_app(test_config=None):
       'categories': categories
     })
   
-  
-  '''
-  ##TODO: 10 questions at a time
-  '''
+
   @app.route('/questions', methods=['GET'])
   def show_questions():
     q_list = Question.query.all()

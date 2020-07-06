@@ -134,6 +134,7 @@ class QuestionView extends Component {
           </ul>
           <Search submitSearch={this.submitSearch}/>
         </div>
+
         <div className="questions-list">
           <h2>Questions</h2>
           {this.state.questions.map((q, ind) => (
@@ -146,6 +147,7 @@ class QuestionView extends Component {
               questionAction={this.questionAction(q.id)}
             />
           ))}
+          
           <div className="pagination-menu">
             {this.createPagination()}
           </div>
