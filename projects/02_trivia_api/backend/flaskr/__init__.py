@@ -66,27 +66,46 @@ def create_app(test_config=None):
   def show_questions():
     q_list = Question.query.all()
     questions = pagination_helper(request, q_list)
-    
+    cat_set = set([q.category for q in questions])
+
+    cat_list = Category.query.order_by(Category.id).all()
+    categories = [category.format() for category in cat_list]
+    curr_categories = [category.format() for category in cat_list if category.id in cat_set]
+
     if len(questions) == 0: 
       abort(404)
 
     return jsonify({
       'success': True,
       'questions': questions,
-      'total_questions': len(q_list)
+      'categories': categories,
+      'currentCategory': curr_categories,
+      'totalQuestions': len(q_list)
     })
 
   '''
-  ##TODO: 
-  Create an endpoint to DELETE question using a question ID. 
+  ##TODO: Create an endpoint to DELETE question using a question ID. 
 
   TEST: When you click the trash icon next to a question, the question will be removed.
   This removal will persist in the database and when you refresh the page. 
   '''
-  @app.route('books/<int:book_id>', methods=['DELETE'])
-  def delete_book(book_id):
+  @app.route('/questions/<int:question_id>', methods=['DELETE'])
+  def delete_book(question_id):
+
+    try:
+      question = Question.query.filter_by(id=question_id).one_or_none()
+      
+      if question is None:
+        abort(404)
+
+      question.delete()
+
+    except Exception as e:
+      abort(400)
+
     return jsonify({
-      'success': True
+      'success': True,
+      'book': question
     })
 
   '''
