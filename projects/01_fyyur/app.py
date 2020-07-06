@@ -329,10 +329,10 @@ def create_shows():
 @app.route('/shows/create', methods=['POST'])
 def create_show_submission():
   # creates new show
-  # TODO: creates same PK for some reason
   try:
     show = request.form.to_dict()
-    new_show = Show(venue_id=show['venue_id'], artist_id=show['artist_id'], start_time=show['start_time'])
+    start_time_format = datetime.strptime(show['start_time'], '%Y-%m-%d %H:%M:%S')
+    new_show = Show(venue_id=show['venue_id'], artist_id=show['artist_id'], start_time=start_time_format)
     db.session.add(new_show)
     db.session.commit()
     flash('Show was successfully listed!')
