@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import random
 from flask import logging
+from sqlalchemy import func
 
 from models import setup_db, Question, Category
 
@@ -110,6 +111,25 @@ def create_app(test_config=None):
   only question that include that string within their question. 
   Try using the word "title" to start. 
   '''
+  @app.route('/questions', methods=['POST'])
+  def find_question():
+    payload = request.args.get('searchTerm', ' ', type=str)
+    
+    app.logger.info("======")
+    app.logger.info(payload)
+
+    try:
+      questions = Question.query.fitler(func.lower(Question.question).contains(payload.lower())).all()
+      
+    except Exception as e:
+      abort(422)
+
+    return jsonify({
+      'success': True,
+      'questions': questions,
+      'totalQuestions': len(Question.query.all()),
+      'currentCategory': None
+    })
 
   '''
   @#TODO: 
