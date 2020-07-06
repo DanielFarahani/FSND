@@ -10,18 +10,19 @@ from models import setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
 
-def pagination_helper(req, selection):
+def pagination_helper(request, selection):
   """
   req: a json requst
   select: a sqlAlchemy model (should have format())
   returns subset
   """
-  page = req.args.get('page', 1, type=int)
+  page = request.args.get('page', 1, type=int)
   start = (page - 1) * QUESTIONS_PER_PAGE
   end = start + QUESTIONS_PER_PAGE
   selection_formated = [sel.format() for sel in selection]
+  curr_selection = selection_formated[start:end]
 
-  return selection_formated[start:end]
+  return curr_selection
 
 def create_app(test_config=None):
   # create and configure the app
@@ -50,6 +51,7 @@ def create_app(test_config=None):
     })
   
 
+  #TODO: the list doesn't change, double check
   @app.route('/questions', methods=['GET'])
   def show_questions():
     q_list = Question.query.all()
@@ -138,23 +140,27 @@ def create_app(test_config=None):
     })
 
 
-  '''
-  @#TODO: 
-  Create a POST endpoint to get questions to play the quiz. 
-  This endpoint should take category and previous question parameters 
-  and return a random questions within the given category, 
-  if provided, and that is not one of the previous questions. 
-
-  TEST: In the "Play" tab, after a user selects "All" or a category,
-  one question at a time is displayed, the user is allowed to answer
-  and shown whether they were correct or not. 
-  '''
-  @app.route('/quizzes')
+  #TODO: all category condition
+  #TODO: remove prev q
+  #TODO: test
+  @app.route('/quizzes', methods=['POST'])
   def quiz():
     payload = request.get_json()
+    prev_q = payload['previous_questions']
+    category = payload['quiz_category']
+    
+    app.logger.info("======")
+    app.logger.info(payload)
 
-    questions = show_category_questions(payload['quiz_category'])['questions']
-    question = None
+    if prev_q:
+      questions = show_category_questions(category['id']).get_json()['questions']
+      # remove prev_q
+      question = random.choice(questions)
+
+    else:
+      questions = show_category_questions(category['id']).get_json()['questions']
+      question = random.choice(questions)
+      
 
     return jsonify({
       'success': True,

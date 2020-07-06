@@ -136,6 +136,8 @@ class QuestionView extends Component {
           </ul>
           <Search submitSearch={this.submitSearch}/>
         </div>
+        
+        {/* <button onClick={this.state.page = this.state.page - 1}>Previous Page</button> */}
 
         <div className="questions-list">
           <h2>Questions</h2>
@@ -154,6 +156,8 @@ class QuestionView extends Component {
             {this.createPagination()}
           </div>
         </div>
+
+        {/* <button onClick={this.state.page = this.state.page + 1}>Next Page</button> */}
 
       </div>
     );
