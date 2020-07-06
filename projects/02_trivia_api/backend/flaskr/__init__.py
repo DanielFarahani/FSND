@@ -24,9 +24,15 @@ def create_app(test_config=None):
   '''
   @app.after_request
   def after_request(response):
-    response.header.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,true')  # headers types allowed
-    response.header.add('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS')  # methods allowed
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,true')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     return response
+
+  ''' just a place holder '''
+  @app.route('/')
+  def home():
+    return jsonify({'message': 'home'})
+  
 
   '''
   ##TODO: 
@@ -35,15 +41,18 @@ def create_app(test_config=None):
   '''
   @app.route('/categories', methods=['GET'])
   def show_categories():
-    categories = Category.query.order_by(Category.id).all()
-    categories = [category.format() for category in categories]
+    cat_list = Category.query.order_by(Category.id).all()
+    categories = [category.format() for category in cat_list]
+    
     app.logger.info("=======")
     app.logger.info(categories)
-    
+
     return jsonify({
       'success': True,
       'categories': categories.format()
     })
+  
+  
   '''
   ##TODO: 
   Create an endpoint to handle GET requests for questions, 
