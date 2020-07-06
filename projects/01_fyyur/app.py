@@ -187,13 +187,11 @@ def create_venue_submission():
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
-  # TODO: bug the botton doesn't call the function
   try:
-    ven = Venue.query.filter_by(id=venue_id)
+    ven = Venue.query.get(venue_id)
     db.session.delete(ven)
     db.session.commit()
     flash('Venue was successfully deleted!')  # on success
-    return render_template('pages/home.html')
   except Exception as e:
     db.session.rollback()
     flash('Venue was not deleted, please try again!')  # on fail
@@ -201,6 +199,7 @@ def delete_venue(venue_id):
     db.session.close()
 
   return None
+  # return render_template('pages/home.html')
 
 #  Artists
 #  ----------------------------------------------------------------

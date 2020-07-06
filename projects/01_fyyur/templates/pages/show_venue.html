@@ -3,13 +3,9 @@
 {% block content %}
 <div class="row">
 	<div class="col-sm-6">
-		<h1 class="monospace">{{ venue.name }}</h1>
-		<form action="/venues/{{venue.id}}" class="form" method="delete">
-			<input type="submit" value="Delete Venue" 
-				class="btn btn-primary btn-lg btn-block" 
-				formaction="{{ url_for('delete_venue', venue_id=venue.id) }}"
-			>
-		</form>
+		<h1 class="monospace">{{ venue.name }}
+			<button id = "delete_button" class="fas fa-trash pull-right" data-id = "{{venue.id}}"></button>
+		</h1>
 		
 		<p class="subtitle">
 			ID: {{ venue.id }}
@@ -79,6 +75,21 @@
 		{% endfor %}
 	</div>
 </section>
+<script>
+	const delete_button = document.getElementById('delete_button');
+	delete_button.onclick = function (e) {
+		const venue_id = e.target.dataset['id'];
+		fetch('/venues/' + venue_id, {
+			method: "DELETE"
+		})
+		.then(function() {
+			window.location.href = '/venues';
+		})
+		.catch(function(e) {
+			console.log('error', e)
+		})
+	}
+</script>
 
 {% endblock %}
 
