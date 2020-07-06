@@ -12,7 +12,7 @@ QUESTIONS_PER_PAGE = 10
 def pagination_helper(req, selection):
   """
   req: a json requst
-  select: a sqlAlchemy model
+  select: a sqlAlchemy model (should have format())
   returns subset
   """
   page = req.args.get('page', 1, type=int)
@@ -34,19 +34,14 @@ def create_app(test_config=None):
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     return response
 
-  ''' just a place holder '''
   @app.route('/')
   def home():
     return jsonify({'message': 'home'})
   
-
-  '''
-  Gives all categories
-  '''
   @app.route('/categories', methods=['GET'])
   def show_categories():
     cat_list = Category.query.order_by(Category.id).all()
-    categories = [category.format() for category in cat_list]
+    categories = {cat.id: cat.type for cat in cat_list}
 
     return jsonify({
       'success': True,
@@ -56,30 +51,20 @@ def create_app(test_config=None):
   
   '''
   ##TODO: 10 questions at a time
-
-  TEST: At this point, when you start the application
-  you should see questions and categories generated,
-  ten questions per page and pagination at the bottom of the screen for three pages.
-  Clicking on the page numbers should update the questions. 
   '''
   @app.route('/questions', methods=['GET'])
   def show_questions():
     q_list = Question.query.all()
     questions = pagination_helper(request, q_list)
-    cat_set = set([q.category for q in questions])
 
-    cat_list = Category.query.order_by(Category.id).all()
-    categories = [category.format() for category in cat_list]
-    curr_categories = [category.format() for category in cat_list if category.id in cat_set]
-
-    if len(questions) == 0: 
+    if len(q_list) == 0: 
       abort(404)
 
     return jsonify({
       'success': True,
       'questions': questions,
-      'categories': categories,
-      'currentCategory': curr_categories,
+      'categories': show_categories().get_json()['categories'],
+      'currentCategory': None,
       'totalQuestions': len(q_list)
     })
 
