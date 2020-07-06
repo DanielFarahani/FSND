@@ -9,19 +9,25 @@ from models import setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
 
+def pagination_helper(req, selection):
+  """
+  req: a json requst
+  select: a sqlAlchemy model
+  returns subset
+  """
+  page = req.args.get('page', 1, type=int)
+  start = (page - 1) * QUESTIONS_PER_PAGE
+  end = start + QUESTIONS_PER_PAGE
+  selection_formated = [sel.format() for sel in selection]
+
+  return selection_formated[start:end]
+
 def create_app(test_config=None):
   # create and configure the app
   app = Flask(__name__)
   setup_db(app)
-  
-  '''
-  ##TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the Todos
-  '''
   CORS(app)
 
-  '''
-  ##TODO: Use the after_request decorator to set Access-Control-Allow
-  '''
   @app.after_request
   def after_request(response):
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,true')
@@ -35,36 +41,40 @@ def create_app(test_config=None):
   
 
   '''
-  ##TODO: 
-  Create an endpoint to handle GET requests 
-  for all available categories.
+  Gives all categories
   '''
   @app.route('/categories', methods=['GET'])
   def show_categories():
     cat_list = Category.query.order_by(Category.id).all()
     categories = [category.format() for category in cat_list]
-    
-    app.logger.info("=======")
-    app.logger.info(categories)
 
     return jsonify({
       'success': True,
-      'categories': categories.format()
+      'categories': categories
     })
   
   
   '''
-  ##TODO: 
-  Create an endpoint to handle GET requests for questions, 
-  including pagination (every 10 questions). 
-  This endpoint should return a list of questions, 
-  number of total questions, current category, categories. 
+  ##TODO: 10 questions at a time
 
   TEST: At this point, when you start the application
   you should see questions and categories generated,
   ten questions per page and pagination at the bottom of the screen for three pages.
   Clicking on the page numbers should update the questions. 
   '''
+  @app.route('/questions', methods=['GET'])
+  def show_questions():
+    q_list = Question.query.all()
+    questions = pagination_helper(request, q_list)
+    
+    if len(questions) == 0: 
+      abort(404)
+
+    return jsonify({
+      'success': True,
+      'questions': questions,
+      'total_questions': len(q_list)
+    })
 
   '''
   ##TODO: 
@@ -73,6 +83,11 @@ def create_app(test_config=None):
   TEST: When you click the trash icon next to a question, the question will be removed.
   This removal will persist in the database and when you refresh the page. 
   '''
+  @app.route('books/<int:book_id>', methods=['DELETE'])
+  def delete_book(book_id):
+    return jsonify({
+      'success': True
+    })
 
   '''
   @#TODO: 
