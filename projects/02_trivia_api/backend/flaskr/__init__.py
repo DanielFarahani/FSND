@@ -65,12 +65,7 @@ def create_app(test_config=None):
       'totalQuestions': len(q_list)
     })
 
-  '''
-  ##TODO: Create an endpoint to DELETE question using a question ID. 
 
-  TEST: When you click the trash icon next to a question, the question will be removed.
-  This removal will persist in the database and when you refresh the page. 
-  '''
   @app.route('/questions/<int:question_id>', methods=['DELETE'])
   def delete_book(question_id):
 
@@ -86,20 +81,24 @@ def create_app(test_config=None):
       abort(400)
 
     return jsonify({
-      'success': True,
-      'book': question
+      'success': True
     })
 
-  '''
-  @#TODO: 
-  Create an endpoint to POST a new question, 
-  which will require the question and answer text, 
-  category, and difficulty score.
 
-  TEST: When you submit a question on the "Add" tab, 
-  the form will clear and the question will appear at the end of the last page
-  of the questions list in the "List" tab.  
-  '''
+  @app.route('/questions', methods=['POST'])
+  def add_question():
+    payload = request.get_json()
+
+    try:
+      new_question = Question(question=payload['question'], answer=payload['answer'],
+                              difficulty=payload['difficulty'], category=payload['category'])
+      new_question.insert()
+    except Exception as e:
+      abort(300)
+    
+    return jsonify({
+      'success': True
+    })
 
   '''
   @#TODO: 
@@ -134,11 +133,22 @@ def create_app(test_config=None):
   and shown whether they were correct or not. 
   '''
 
-  '''
-  @#TODO: 
-  Create error handlers for all expected errors 
-  including 404 and 422. 
-  '''
+  @app.errorhandler(404)
+  def not_found(error):
+    return jsonify({
+      'success': False,
+      'error': 404,
+      "message": "resourse was not found, try again"
+    }), 404
+  
+  @app.errorhandler(422)
+  def unable_to_process(error):
+    return jsonify({
+      'success': False,
+      'error': 422,
+      "message": "unable to process the entity"
+    }), 422
+  
   
   return app
 
