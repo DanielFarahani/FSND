@@ -149,6 +149,17 @@ def create_app(test_config=None):
   one question at a time is displayed, the user is allowed to answer
   and shown whether they were correct or not. 
   '''
+  @app.route('/quizzes')
+  def quiz():
+    payload = request.get_json()
+
+    questions = show_category_questions(payload['quiz_category'])['questions']
+    question = None
+
+    return jsonify({
+      'success': True,
+      'currentQuestion': question
+    })
 
   @app.errorhandler(404)
   def not_found(error):
