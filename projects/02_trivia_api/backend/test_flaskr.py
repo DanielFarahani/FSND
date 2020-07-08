@@ -45,12 +45,11 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(len(data['questions']), len(questions))
 
-    def tets_question_delete(self):
-        q_id = -99
+    def test_nonexistant_question(self):
+        q_id = 999999
         res = self.client().get('/questions/' + str(q_id))
-        data = json.loads(res.data)
 
-        self.assertEqual(res.status_code, 422)
+        self.assertEqual(res.status_code, 405)
 
 
 
