@@ -141,4 +141,3 @@ def headers(payload):
 
 # the wrapper equivilance
 # payload = verify_decode_jwt(get_token_auth_header(headers))
-# headers(payload)

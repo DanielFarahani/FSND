@@ -8,15 +8,15 @@ from sqlalchemy import func
 
 from models import setup_db, Question, Category
 
-QUESTIONS_PER_PAGE = 10
+QUESTIONS_PER_PAGE = 2
 
-def pagination_helper(request, selection):
+def pagination_helper(req, selection):
   """
   req: a json requst
   select: a sqlAlchemy model (should have format())
   returns subset
   """
-  page = request.args.get('page', 1, type=int)
+  page = req.args.get('page', 1, type=int)
   start = (page - 1) * QUESTIONS_PER_PAGE
   end = start + QUESTIONS_PER_PAGE
   selection_formated = [sel.format() for sel in selection]
@@ -44,27 +44,29 @@ def create_app(test_config=None):
   def show_categories():
     cat_list = Category.query.order_by(Category.id).all()
     categories = {cat.id: cat.type for cat in cat_list}
-
     return jsonify({
       'success': True,
       'categories': categories
     })
   
-  #TODO: the list doesn't change, double check
-  @app.route('/questions', methods=['GET'])
+  @app.route('/questions?page=', methods=['GET'])
   def show_questions():
     q_list = Question.query.all()
     questions = pagination_helper(request, q_list)
-
-    if len(q_list) == 0: 
+    categories = show_categories().get_json()['categories']
+    
+    app.logger.info("=========")
+    app.logger.info(questions)
+    
+    if len(questions) == 0: 
       abort(404)
 
     return jsonify({
       'success': True,
       'questions': questions,
-      'categories': show_categories().get_json()['categories'],
-      'currentCategory': None,
-      'totalQuestions': len(q_list)
+      'total_questions': len(q_list),
+      'categories': categories,
+      'current_category': None
     })
 
 
@@ -117,8 +119,8 @@ def create_app(test_config=None):
     return jsonify({
       'success': True,
       'questions': questions,
-      'totalQuestions': len(Question.query.all()),
-      'currentCategory': None
+      'total_questions': len(Question.query.all()),
+      'current_category': None
     })
 
 
@@ -134,13 +136,12 @@ def create_app(test_config=None):
     return jsonify({
       'success': True,
       'questions': questions,
-      'currentCategory': cat_id,
-      'totalQuestions': len(Question.query.all())
+      'current_category': cat_id,
+      'total_questions': len(Question.query.all())
     })
 
   #TODO: all category condition
   #TODO: remove prev q
-  #TODO: test
   @app.route('/quizzes', methods=['POST'])
   def quiz():
     payload = request.get_json()
@@ -158,11 +159,10 @@ def create_app(test_config=None):
     else:
       questions = show_category_questions(category['id']).get_json()['questions']
       question = random.choice(questions)
-      
 
     return jsonify({
       'success': True,
-      'currentQuestion': question
+      'question': question
     })
 
   @app.errorhandler(404)
