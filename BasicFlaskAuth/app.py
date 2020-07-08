@@ -4,12 +4,13 @@ from functools import wraps
 from jose import jwt
 from urllib.request import urlopen
 
+# https://{{YOUR_DOMAIN}}/authorize?audience={{API_IDENTIFIER}}&response_type=token&client_id={{YOUR_CLIENT_ID}}&redirect_uri={{YOUR_CALLBACK_URI}}
 
 app = Flask(__name__)
 
-AUTH0_DOMAIN = @TODO_REPLACE_WITH_YOUR_DOMAIN
+AUTH0_DOMAIN = "danielfarahani.au.auth0.com"
 ALGORITHMS = ['RS256']
-API_AUDIENCE = @TODO_REPLACE_WITH_YOUR_API_AUDIENCE
+API_AUDIENCE = "app"
 
 
 class AuthError(Exception):
@@ -18,16 +19,20 @@ class AuthError(Exception):
         self.status_code = status_code
 
 
+# authentication core function
 def get_token_auth_header():
     """Obtains the Access Token from the Authorization Header
     """
-    auth = request.headers.get('Authorization', None)
+    auth = request.headers.get('Authorization', None)  # get the value from the header
+
+    # error if header token is missing
     if not auth:
         raise AuthError({
             'code': 'authorization_header_missing',
             'description': 'Authorization header is expected.'
         }, 401)
 
+    # check for bearer type of a token
     parts = auth.split()
     if parts[0].lower() != 'bearer':
         raise AuthError({
@@ -35,33 +40,38 @@ def get_token_auth_header():
             'description': 'Authorization header must start with "Bearer".'
         }, 401)
 
+    # token is empty
     elif len(parts) == 1:
         raise AuthError({
             'code': 'invalid_header',
             'description': 'Token not found.'
         }, 401)
 
+    # somehting extra is in the header
     elif len(parts) > 2:
         raise AuthError({
             'code': 'invalid_header',
             'description': 'Authorization header must be bearer token.'
         }, 401)
 
+    # get the token
     token = parts[1]
     return token
 
-
 def verify_decode_jwt(token):
-    jsonurl = urlopen(f'https://{AUTH0_DOMAIN}/.well-known/jwks.json')
+    jsonurl = urlopen(f'https://{AUTH0_DOMAIN}/.well-known/jwks.json') # TODO what is this?
     jwks = json.loads(jsonurl.read())
     unverified_header = jwt.get_unverified_header(token)
     rsa_key = {}
+
+    # KID missing error
     if 'kid' not in unverified_header:
         raise AuthError({
             'code': 'invalid_header',
             'description': 'Authorization malformed.'
         }, 401)
 
+    # if KIDs are the sme go ahead and make the datapackage
     for key in jwks['keys']:
         if key['kid'] == unverified_header['kid']:
             rsa_key = {
@@ -71,6 +81,8 @@ def verify_decode_jwt(token):
                 'n': key['n'],
                 'e': key['e']
             }
+
+    # decode the payload with the toek and key info
     if rsa_key:
         try:
             payload = jwt.decode(
@@ -104,8 +116,9 @@ def verify_decode_jwt(token):
                 'description': 'Unable to find the appropriate key.'
             }, 400)
 
-
+# wrapper func, wrapps authentication around 
 def requires_auth(f):
+
     @wraps(f)
     def wrapper(*args, **kwargs):
         token = get_token_auth_header()
@@ -113,12 +126,19 @@ def requires_auth(f):
             payload = verify_decode_jwt(token)
         except:
             abort(401)
+
         return f(payload, *args, **kwargs)
 
     return wrapper
+
 
 @app.route('/headers')
 @requires_auth
 def headers(payload):
     print(payload)
     return 'Access Granted'
+
+
+# the wrapper equivilance
+# payload = verify_decode_jwt(get_token_auth_header(headers))
+# headers(payload)

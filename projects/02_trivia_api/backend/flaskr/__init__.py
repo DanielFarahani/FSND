@@ -50,7 +50,6 @@ def create_app(test_config=None):
       'categories': categories
     })
   
-
   #TODO: the list doesn't change, double check
   @app.route('/questions', methods=['GET'])
   def show_questions():
@@ -138,7 +137,6 @@ def create_app(test_config=None):
       'currentCategory': cat_id,
       'totalQuestions': len(Question.query.all())
     })
-
 
   #TODO: all category condition
   #TODO: remove prev q
