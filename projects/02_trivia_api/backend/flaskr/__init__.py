@@ -8,7 +8,7 @@ from sqlalchemy import func
 
 from models import setup_db, Question, Category
 
-QUESTIONS_PER_PAGE = 2
+QUESTIONS_PER_PAGE = 10
 
 def pagination_helper(req, selection):
   """
@@ -49,15 +49,12 @@ def create_app(test_config=None):
       'categories': categories
     })
   
-  @app.route('/questions?page=', methods=['GET'])
+  @app.route('/questions', methods=['GET'])
   def show_questions():
     q_list = Question.query.all()
     questions = pagination_helper(request, q_list)
     categories = show_categories().get_json()['categories']
-    
-    app.logger.info("=========")
-    app.logger.info(questions)
-    
+  
     if len(questions) == 0: 
       abort(404)
 
@@ -72,13 +69,10 @@ def create_app(test_config=None):
 
   @app.route('/questions/<int:question_id>', methods=['DELETE'])
   def delete_book(question_id):
-
     try:
       question = Question.query.filter_by(id=question_id).one_or_none()
-      
       if question is None:
         abort(404)
-
       question.delete()
 
     except Exception as e:
@@ -140,25 +134,24 @@ def create_app(test_config=None):
       'total_questions': len(Question.query.all())
     })
 
-  #TODO: all category condition
-  #TODO: remove prev q
   @app.route('/quizzes', methods=['POST'])
   def quiz():
     payload = request.get_json()
     prev_q = payload['previous_questions']
-    category = payload['quiz_category']
+    category = payload['quiz_category']['id']
     
-    app.logger.info("======")
-    app.logger.info(payload)
+    questions = show_category_questions(category).get_json()['questions'] if \
+      category != 0 else show_questions().get_json()['questions']
 
-    if prev_q:
-      questions = show_category_questions(category['id']).get_json()['questions']
-      # remove prev_q
-      question = random.choice(questions)
-
-    else:
-      questions = show_category_questions(category['id']).get_json()['questions']
-      question = random.choice(questions)
+    app.logger.info(questions)
+    try:
+      if prev_q:
+        questions = [q for q in questions if q['id'] not in prev_q]
+        question = random.choice(questions)
+      else:
+        question = random.choice(questions)
+    except IndexError:
+      question = None
 
     return jsonify({
       'success': True,
