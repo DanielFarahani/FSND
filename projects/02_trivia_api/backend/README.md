@@ -72,9 +72,12 @@ This README is missing documentation of your endpoints. Below is an example for 
 
 Endpoints
 GET '/categories'
-GET ...
-POST ...
-DELETE ...
+GET '/questions'
+GET '/categories/category_id/questions'
+POST '/questions'
+POST '/quizzes'
+POST '/searchQuizzes'
+DELETE 'questions/questions_id'
 
 GET '/categories'
 - Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
@@ -87,7 +90,38 @@ GET '/categories'
 '5' : "Entertainment",
 '6' : "Sports"}
 
+GET '/questions'
+- fetches all questions with pagination 
+- arguments: none:
+- return list of paginated questions
+
+GET '/categories/category_id/questions'
+- returns questions with certain catgory 
+- arguments: id
+- return: list of questions
+
+POST '/questions'
+- add new questions to the data base
+- arguments: question, answer, category, qid
+- return: success message
+
+POST '/quizzes'
+- return new random questions from categories
+- argument: category id, previous questions id
+- return: new question 
+
+POST '/searchQuizzes'
+- substring search of questions 
+- argument: search string
+- resturns: list of string
+
+DELETE 'questions/questions_id'
+- delete question from db
+- argument: id
+- returns: success message 
+
 ```
+
 
 
 ## Testing
