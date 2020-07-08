@@ -29,13 +29,29 @@ class TriviaTestCase(unittest.TestCase):
         """Executed after reach test"""
         pass
 
-    """
-    TODO
-    Write at least one test for each test for successful operation and for expected errors.
-    """
-    # problem pagination
-    # problem per quiz
-    # quiz
+    def test_get_paginated_books(self):
+        res = self.client().get('/questions')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['total_questions'], 19)
+    
+    def test_category_filter(self):
+        cat_id = 5
+        res = self.client().get('/categories/'+ str(cat_id) +'/questions')
+        data = json.loads(res.data)
+        questions = Question.query.filter(Question.category == cat_id).all()
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(len(data['questions']), len(questions))
+
+    def tets_question_delete(self):
+        q_id = -99
+        res = self.client().get('/questions/' + str(q_id))
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 422)
+
 
 
 # Make the tests conveniently executable
