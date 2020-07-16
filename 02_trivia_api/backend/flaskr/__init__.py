@@ -68,18 +68,21 @@ def create_app(test_config=None):
 
 
   @app.route('/questions/<int:question_id>', methods=['DELETE'])
-  def delete_book(question_id):
+  def delete_question(question_id):
     try:
       question = Question.query.filter_by(id=question_id).one_or_none()
+
       if question is None:
         abort(404)
+
       question.delete()
 
     except Exception as e:
       abort(400)
 
     return jsonify({
-      'success': True
+      'success': True,
+
     })
 
 
@@ -95,7 +98,8 @@ def create_app(test_config=None):
       abort(300)
     
     return jsonify({
-      'success': True
+      'success': True,
+      'tatal_questions': len(Question.query.all())
     })
 
 
@@ -163,7 +167,7 @@ def create_app(test_config=None):
     return jsonify({
       'success': False,
       'error': 404,
-      "message": "resourse was not found, try again"
+      "message": "Resourse was not found, try again"
     }), 404
   
   @app.errorhandler(422)
@@ -171,7 +175,7 @@ def create_app(test_config=None):
     return jsonify({
       'success': False,
       'error': 422,
-      "message": "unable to process the entity"
+      "message": "Unable to process the entity"
     }), 422
 
   @app.errorhandler(400)
@@ -179,7 +183,7 @@ def create_app(test_config=None):
     return jsonify({
       'success': False,
       'error': 400,
-      "message": "invalid data added, please try again"
+      "message": "Invalid data request, please try again"
     }), 400
   
   
