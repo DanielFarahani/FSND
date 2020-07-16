@@ -173,6 +173,14 @@ def create_app(test_config=None):
       'error': 422,
       "message": "unable to process the entity"
     }), 422
+
+  @app.errorhandler(400)
+  def invalid_data(error):
+    return jsonify({
+      'success': False,
+      'error': 400,
+      "message": "invalid data added, please try again"
+    }), 400
   
   
   return app
