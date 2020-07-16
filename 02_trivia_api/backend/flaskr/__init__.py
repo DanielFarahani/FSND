@@ -73,23 +73,21 @@ def create_app(test_config=None):
       question = Question.query.filter_by(id=question_id).one_or_none()
 
       if question is None:
-        abort(404)
-
+        abort(422)
       question.delete()
-
+    
     except Exception as e:
+
       abort(400)
 
     return jsonify({
-      'success': True,
-
+      'success': True
     })
 
-
+  # adding a new question
   @app.route('/questions', methods=['POST'])
   def add_question():
     payload = request.get_json()
-
     try:
       new_question = Question(question=payload['question'], answer=payload['answer'],
                               difficulty=payload['difficulty'], category=payload['category'])
@@ -144,8 +142,8 @@ def create_app(test_config=None):
     prev_q = payload['previous_questions']
     category = payload['quiz_category']['id']
     
-    questions = show_category_questions(category).get_json()['questions'] if \
-      category != 0 else show_questions().get_json()['questions']
+    questions = show_category_questions(category).get_json()['questions'] \
+                if category != 0 else show_questions().get_json()['questions']
 
     app.logger.info(questions)
     try:
@@ -175,7 +173,7 @@ def create_app(test_config=None):
     return jsonify({
       'success': False,
       'error': 422,
-      "message": "Unable to process the entity"
+      "message": "Unable to access the entity, try again",
     }), 422
 
   @app.errorhandler(400)
